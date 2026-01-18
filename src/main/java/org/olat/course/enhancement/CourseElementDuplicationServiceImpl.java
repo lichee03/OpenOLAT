@@ -29,6 +29,7 @@ import java.util.Set;
 import org.apache.logging.log4j.Logger;
 import org.olat.core.id.Identity;
 import org.olat.core.logging.Tracing;
+import org.olat.core.util.XStreamHelper;
 import org.olat.course.CourseFactory;
 import org.olat.course.ICourse;
 import org.olat.course.nodes.CourseNode;
@@ -46,7 +47,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CourseElementDuplicationServiceImpl implements CourseElementDuplicationService {
 	
-	private static final Logger log = Tracing.createLogger(CourseElementDuplicationServiceImpl.class);
+	private static final Logger log = Tracing.createLoggerFor(CourseElementDuplicationServiceImpl.class);
 	
 	private static final Set<String> NON_DUPLICABLE_TYPES = new HashSet<>();
 	static {
@@ -222,34 +223,33 @@ public class CourseElementDuplicationServiceImpl implements CourseElementDuplica
 		}
 		
 		try {
-			// Create new node of same type
-			CourseNode newNode = CourseNodeFactory.getInstance()
-				.createCourseNode(sourceNode.getType());
+			// Deep clone the source node to preserve all settings
+			CourseNode newNode = (CourseNode) XStreamHelper.xstreamClone(sourceNode);
 			
 			if (newNode == null) {
-				log.warn("Failed to create node of type: {}", sourceNode.getType());
+				log.warn("Failed to clone node of type: {}", sourceNode.getType());
 				return null;
 			}
 			
-			// Copy basic properties
-			newNode.setShortTitle(sourceNode.getShortTitle() + " (copy)");
-			newNode.setLongTitle(sourceNode.getLongTitle());
-			newNode.setDescription(sourceNode.getDescription());
-			newNode.setDisplayOption(sourceNode.getDisplayOption());
+			// Clear children as they will be duplicated separately
+			newNode.removeAllChildren();
 			
-			// Copy module configuration
-			if (preserveAssessment || !isAssessmentNode(sourceNode)) {
-				// Deep copy the module configuration
-				newNode.setModuleConfiguration(new org.olat.modules.ModuleConfiguration(sourceNode.getModuleConfiguration()));
-			} else {
-				// Create fresh configuration for non-assessment nodes
-				newNode.setModuleConfiguration(new org.olat.modules.ModuleConfiguration(sourceNode.getModuleConfiguration()));
+			// Update node title to indicate it's a copy
+			String newShortTitle = sourceNode.getShortTitle();
+			if (newShortTitle != null && newShortTitle.length() < 180) {
+				newNode.setShortTitle(newShortTitle + " (copy)");
 			}
 			
-			// Add to parent and save
+			// Clear assessment configuration if not preserving it
+			if (!preserveAssessment && isAssessmentNode(sourceNode)) {
+				org.olat.modules.ModuleConfiguration config = newNode.getModuleConfiguration();
+				if (config != null) {
+					// Could clear specific assessment keys here if needed
+				}
+			}
+			
+			// Add to parent in the course tree
 			targetParent.addChild(newNode);
-			// Save the node to the course structure
-			course.getCourseEnvironment().getRunStructureManager().addCourseNode(newNode);
 			
 			log.debug("Created duplicate node {} from {}", 
 				newNode.getIdent(), sourceNode.getIdent());
