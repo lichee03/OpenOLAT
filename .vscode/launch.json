@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Attach) - Tomcat",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "timeout": 30000,
+            "projectName": "openolat-lms"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Attach) - Tomcat (Custom Port)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "${input:debugPort}",
+            "timeout": 30000,
+            "projectName": "openolat-lms"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "debugPort",
+            "type": "promptString",
+            "description": "Enter the debug port number:",
+            "default": "5005"
+        }
+    ]
+}
