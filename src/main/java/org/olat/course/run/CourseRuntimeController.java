@@ -126,6 +126,8 @@ import org.olat.course.disclaimer.ui.CourseDisclaimerReviewController;
 import org.olat.course.editor.EditorMainController;
 import org.olat.course.editor.QuickPublishEvent;
 import org.olat.course.editor.overview.OverviewController;
+import org.olat.course.enhancement.CourseElementDuplicationService;
+import org.olat.course.enhancement.SelectiveTemplateInstantiationService;
 import org.olat.course.folder.ui.CourseFolderController;
 import org.olat.course.groupsandrights.CourseGroupManager;
 import org.olat.course.groupsandrights.CourseRights;
@@ -358,6 +360,10 @@ public class CourseRuntimeController extends RepositoryEntryRuntimeController im
 	private CourseDisclaimerManager disclaimerManager;
 	@Autowired
 	private ZoomModule zoomModule;
+	@Autowired
+	private CourseElementDuplicationService courseElementDuplicationService;
+	@Autowired
+	private SelectiveTemplateInstantiationService selectiveTemplateInstantiationService;
 	@Autowired
 	private QualityModule qualityModule;
 	@Autowired
