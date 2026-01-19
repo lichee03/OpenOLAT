@@ -126,6 +126,8 @@ public class EnrollmentManager implements GenericEventListener {
 	private RepositoryEntryDAO repositoryEntryDao;
 	@Autowired
 	private BusinessGroupRelationDAO businessGroupRelationDao;
+	@Autowired
+	private org.olat.course.nodes.en.validation.PrerequisiteValidationService prerequisiteValidationService;
 
 	@PostConstruct
 	public void registerForEvents() {
@@ -138,6 +140,32 @@ public class EnrollmentManager implements GenericEventListener {
 		log.debug("doEnroll");
 		
 		Identity identity = userCourseEnv.getIdentityEnvironment().getIdentity();
+		
+		// Validate prerequisites before enrollment
+		org.olat.course.nodes.en.validation.EnrollmentEligibility eligibility = 
+				prerequisiteValidationService.validateEligibility(identity, group, enNode, userCourseEnv);
+		
+		if (!eligibility.isEligible()) {
+			log.debug("User {} is not eligible to enroll in group {}: {}", 
+					identity.getKey(), group.getName(), eligibility.getErrors());
+			final EnrollStatus enrollStatus = new EnrollStatus();
+			// Collect all error messages
+			StringBuilder errorMsg = new StringBuilder();
+			for (org.olat.course.nodes.en.validation.EnrollmentEligibility.ValidationMessage error : eligibility.getErrors()) {
+				if (errorMsg.length() > 0) errorMsg.append("; ");
+				errorMsg.append(error.getMessage());
+			}
+			enrollStatus.setErrorMessage(errorMsg.toString());
+			return enrollStatus;
+		}
+		
+		// Log warnings if any
+		if (eligibility.hasWarnings()) {
+			for (org.olat.course.nodes.en.validation.EnrollmentEligibility.ValidationMessage warning : eligibility.getWarnings()) {
+				log.info("Enrollment warning for user {} in group {}: {}", 
+						identity.getKey(), group.getName(), warning.getMessage());
+			}
+		}
 
 		final EnrollStatus enrollStatus = new EnrollStatus();
 		// check if the user is able to be enrolled
@@ -676,6 +704,84 @@ public class EnrollmentManager implements GenericEventListener {
 			return false;
 		}
 
+	}
+	
+	/**
+	 * Move a user from waitlist to participants if space is available.
+	 * Used by auto-action service for automated waitlist processing.
+	 * 
+	 * @param identity The identity to move
+	 * @param group The business group
+	 * @param courseEntry The course repository entry
+	 * @param enNode The enrollment course node
+	 * @return true if the user was successfully moved, false otherwise
+	 */
+	public boolean moveFromWaitingListToParticipant(Identity identity, BusinessGroup group, 
+	                                                 RepositoryEntry courseEntry, ENCourseNode enNode) {
+		try {
+			// Check if group has capacity
+			int maxParticipants = group.getMaxParticipants() == null ? -1 : group.getMaxParticipants();
+			if (maxParticipants > 0) {
+				int currentCount = businessGroupService.countMembers(group, GroupRoles.participant.name());
+				if (currentCount >= maxParticipants) {
+					log.debug("Cannot move user {} from waitlist - group {} is full", identity.getKey(), group.getKey());
+					return false;
+				}
+			}
+			
+			// Check if user is actually on waitlist
+			boolean isOnWaitlist = businessGroupService.hasRoles(identity, group, GroupRoles.waiting.name());
+			if (!isOnWaitlist) {
+				log.debug("User {} is not on waitlist for group {}", identity.getKey(), group.getKey());
+				return false;
+			}
+			
+			// Remove from waitlist
+			businessGroupService.removeFromWaitingList(identity, Collections.singletonList(identity), group, null);
+			
+			// Add to participants
+			EnrollState enrollState = businessGroupService.enroll(identity, null, identity, 
+			                                                       group, new MailPackage(false));
+			
+			if (enrollState.isFailed()) {
+				log.warn("Failed to move user {} from waitlist to participants in group {}: {}", 
+				        identity.getKey(), group.getKey(), enrollState.getI18nErrorMessage());
+				return false;
+			}
+			
+			// Update enrollment properties
+			ICourse course = CourseFactory.loadCourse(courseEntry);
+			CoursePropertyManager coursePropertyManager = course.getCourseEnvironment().getCoursePropertyManager();
+			
+			// Set enrollment date
+			Property initialEnrollmentDate = coursePropertyManager.findCourseNodeProperty(enNode, identity, null, 
+			                                                                               ENCourseNode.PROPERTY_INITIAL_ENROLLMENT_DATE);
+			if (initialEnrollmentDate == null) {
+				initialEnrollmentDate = coursePropertyManager.createCourseNodePropertyInstance(enNode, identity, null, 
+				                                                                                ENCourseNode.PROPERTY_INITIAL_ENROLLMENT_DATE, null, null, 
+				                                                                                String.valueOf(System.currentTimeMillis()), null);
+				coursePropertyManager.saveProperty(initialEnrollmentDate);
+			}
+			
+			Property recentEnrollmentDate = coursePropertyManager.findCourseNodeProperty(enNode, identity, null, 
+			                                                                              ENCourseNode.PROPERTY_RECENT_ENROLLMENT_DATE);
+			if (recentEnrollmentDate == null) {
+				recentEnrollmentDate = coursePropertyManager.createCourseNodePropertyInstance(enNode, identity, null, 
+				                                                                               ENCourseNode.PROPERTY_RECENT_ENROLLMENT_DATE, null, null, 
+				                                                                               String.valueOf(System.currentTimeMillis()), null);
+				coursePropertyManager.saveProperty(recentEnrollmentDate);
+			} else {
+				recentEnrollmentDate.setStringValue(String.valueOf(System.currentTimeMillis()));
+				coursePropertyManager.updateProperty(recentEnrollmentDate);
+			}
+			
+			log.info("Successfully moved user {} from waitlist to participants in group {}", identity.getKey(), group.getKey());
+			return true;
+			
+		} catch (Exception e) {
+			log.error("Error moving user {} from waitlist to participants in group {}", identity.getKey(), group.getKey(), e);
+			return false;
+		}
 	}
 
 }

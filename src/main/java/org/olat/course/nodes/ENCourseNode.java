@@ -128,6 +128,24 @@ public class ENCourseNode extends AbstractAccessableCourseNode {
 	
 	/** CONF_CANCEL_ENROLL_ENABLED configuration parameter key. */
 	public static final String CONF_CANCEL_ENROLL_ENABLED = "cancel_enroll_enabled";
+	
+	/** Enrollment period start date */
+	public static final String CONF_ENROLLMENT_BEGIN = "enrollment_begin";
+	
+	/** Enrollment period end date */
+	public static final String CONF_ENROLLMENT_END = "enrollment_end";
+	
+	/** Auto-process waitlist when enrollment opens */
+	public static final String CONF_AUTO_PROCESS_WAITLIST_START = "auto_process_waitlist_start";
+	
+	/** Auto-process waitlist when enrollment closes */
+	public static final String CONF_AUTO_PROCESS_WAITLIST_END = "auto_process_waitlist_end";
+	
+	/** Send notification when enrollment period starts */
+	public static final String CONF_NOTIFY_ON_PERIOD_START = "notify_on_period_start";
+	
+	/** Send notification when enrollment period ends */
+	public static final String CONF_NOTIFY_ON_PERIOD_END = "notify_on_period_end";
 
 	private static final int CURRENT_CONFIG_VERSION = 3;
 
