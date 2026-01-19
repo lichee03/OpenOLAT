@@ -14,6 +14,9 @@
 <div class="o_header_with_buttons">
 	<h4><i class="o_icon o_icon_group"> </i> $r.translate("menu.members")</h4>
 	<div class="o_button_group">
+		#if($r.visible("bulkAssign"))
+			$r.render("bulkAssign")
+		#end
 		#if($r.visible("addMembers") && $r.visible("addmore"))
 		<div class="btn-group">
 			$r.render("addMembers")

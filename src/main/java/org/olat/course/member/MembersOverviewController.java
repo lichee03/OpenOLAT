@@ -98,6 +98,7 @@ public class MembersOverviewController extends BasicController implements Activa
 	private Link overrideLink;
 	private Link unOverrideLink;
 	private Link invitationLink;
+	private Link bulkAssignLink;
 	private final Link dedupLink;
 	private final Link addMemberLink;
 	private final Dropdown moreDropdown;
@@ -111,6 +112,7 @@ public class MembersOverviewController extends BasicController implements Activa
 	private StepsMainRunController invitationWizard;
 	private StepsMainRunController importMembersWizard;
 	private DedupMembersConfirmationController dedupCtrl;
+	private BulkStaffAssignmentController bulkAssignCtrl;
 	
 	private final boolean managed;
 	private boolean overrideManaged = false;
@@ -177,6 +179,12 @@ public class MembersOverviewController extends BasicController implements Activa
 			addMemberDropdown.setVisible(false);
 		}
 
+		// Enhancement 3: Bulk assign staff - standalone button for visibility
+		bulkAssignLink = LinkFactory.createButton("bulk.assign", mainVC, this);
+		bulkAssignLink.setIconLeftCSS("o_icon o_icon-fw o_icon_group");
+		bulkAssignLink.setVisible(!managed && !coachCourseEnv.isCourseReadOnly());
+		mainVC.put("bulkAssign", bulkAssignLink);
+		
 		moreDropdown = DropdownUIFactory.createMoreDropdown("more", getTranslator());
 		moreDropdown.setButton(true);
 		moreDropdown.setVisible(!managed && !coachCourseEnv.isCourseReadOnly()
@@ -226,6 +234,8 @@ public class MembersOverviewController extends BasicController implements Activa
 			doInvitation(ureq);
 		} else if (source == dedupLink) {
 			doDedupMembers(ureq);
+		} else if (source == bulkAssignLink) {
+			doBulkAssign(ureq);
 		} else if (source == overrideLink) {
 			doOverrideManagedResource(ureq);
 		} else if (source == unOverrideLink) {
@@ -248,6 +258,14 @@ public class MembersOverviewController extends BasicController implements Activa
 				}
 				cleanUp();
 			}
+		} else if(source == bulkAssignCtrl) {
+			if(event == Event.DONE_EVENT || event == Event.CHANGED_EVENT) {
+				if(memberListCtrl != null) {
+					memberListCtrl.reloadModel();
+				}
+			}
+			cmc.deactivate();
+			cleanUp();
 		} else if(source == dedupCtrl) {
 			if(event == Event.DONE_EVENT) {
 				dedupMembers(ureq, dedupCtrl.isDedupCoaches(), dedupCtrl.isDedupParticipants());
@@ -263,10 +281,12 @@ public class MembersOverviewController extends BasicController implements Activa
 	private void cleanUp() {
 		removeAsListenerAndDispose(importMembersWizard);
 		removeAsListenerAndDispose(invitationWizard);
+		removeAsListenerAndDispose(bulkAssignCtrl);
 		removeAsListenerAndDispose(dedupCtrl);
 		removeAsListenerAndDispose(cmc);
 		importMembersWizard = null;
 		invitationWizard = null;
+		bulkAssignCtrl = null;
 		dedupCtrl = null;
 		cmc = null;
 	}
@@ -275,6 +295,19 @@ public class MembersOverviewController extends BasicController implements Activa
 		if(memberListCtrl != null) {
 			memberListCtrl.reloadModel();
 		}
+	}
+	
+	private void doBulkAssign(UserRequest ureq) {
+		removeAsListenerAndDispose(bulkAssignCtrl);
+		removeAsListenerAndDispose(cmc);
+		
+		bulkAssignCtrl = new BulkStaffAssignmentController(ureq, getWindowControl(), repoEntry);
+		listenTo(bulkAssignCtrl);
+		
+		String title = translate("bulk.assign.title");
+		cmc = new CloseableModalController(getWindowControl(), translate("close"), bulkAssignCtrl.getInitialComponent(), true, title);
+		listenTo(cmc);
+		cmc.activate();
 	}
 	
 	private void doOverrideManagedResource(UserRequest ureq) {
@@ -297,6 +330,9 @@ public class MembersOverviewController extends BasicController implements Activa
 			addMemberDropdown.setVisible(overrideManaged);
 		}
 		
+		if(bulkAssignLink != null) {
+			bulkAssignLink.setVisible(overrideManaged);
+		}
 		dedupLink.setVisible(overrideManaged);
 		mainVC.setDirty(true);
 		

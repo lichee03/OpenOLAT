@@ -1,0 +1,191 @@
+<div class="o_readiness_check $statusClass">
+    <h4><i class="o_icon $statusIcon"></i> $r.translate("readiness.title")</h4>
+    
+    <div class="o_readiness_summary o_block_large">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="o_readiness_score_panel">
+                    <div class="o_readiness_score #if($ready)o_readiness_score_good#else o_readiness_score_bad#end">
+                        <span class="o_score_value">${readinessScore}%</span>
+                    </div>
+                    <div class="o_readiness_status">
+                        #if($ready)
+                            <span class="o_state o_passed"><i class="o_icon o_icon_status_done"></i> $r.translate("readiness.status.ready")</span>
+                        #else
+                            <span class="o_state o_failed"><i class="o_icon o_icon_error"></i> $r.translate("readiness.status.notready")</span>
+                        #end
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="o_readiness_stats">
+                    <table class="table table-condensed">
+                        <tr>
+                            <td><i class="o_icon o_icon_error text-danger"></i> $r.translate("readiness.critical")</td>
+                            <td><strong>$criticalCount</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="o_icon o_icon_error text-warning"></i> $r.translate("readiness.errors")</td>
+                            <td><strong>$errorCount</strong></td>
+                        </tr>
+                        <tr>
+                            <td><i class="o_icon o_icon_warn"></i> $r.translate("readiness.warnings")</td>
+                            <td><strong>$warningCount</strong></td>
+                        </tr>
+                        <tr>
+                            <td>$r.translate("readiness.total")</td>
+                            <td><strong>$totalIssues</strong></td>
+                        </tr>
+                    </table>
+                    <p class="text-muted o_small">$r.translate("readiness.check.duration", $checkDuration)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    #if($hasAutoFixable)
+    <div class="o_readiness_autofix o_info">
+        <i class="o_icon o_icon_wizard"></i>
+        $r.translate("readiness.autofix.available", $autoFixableCount)
+        $r.render("readiness.autofix")
+    </div>
+    #end
+    
+    #if($criticalIssues && $criticalIssues.size() > 0)
+    <div class="o_readiness_section o_error">
+        <h5><i class="o_icon o_icon_error text-danger"></i> $r.translate("readiness.section.critical")</h5>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>$r.translate("readiness.col.issue")</th>
+                    <th>$r.translate("readiness.col.node")</th>
+                    <th>$r.translate("readiness.col.category")</th>
+                    <th>$r.translate("readiness.col.fix")</th>
+                </tr>
+            </thead>
+            <tbody>
+                #foreach($issue in $criticalIssues)
+                <tr class="o_issue_critical">
+                    <td>
+                        <i class="o_icon $issue.severityIcon"></i>
+                        $issue.message
+                    </td>
+                    <td>#if($issue.nodeName)$issue.nodeName#else-#end</td>
+                    <td><span class="o_labeled">$issue.category</span></td>
+                    <td>
+                        #if($issue.suggestedFix)
+                            <span class="text-muted">$issue.suggestedFix</span>
+                        #end
+                        #if($issue.autoFixable)
+                            <span class="o_badge o_badge_success">$r.translate("readiness.autofixable")</span>
+                        #end
+                    </td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    #end
+    
+    #if($errorIssues && $errorIssues.size() > 0)
+    <div class="o_readiness_section o_warning">
+        <h5><i class="o_icon o_icon_error text-warning"></i> $r.translate("readiness.section.errors")</h5>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>$r.translate("readiness.col.issue")</th>
+                    <th>$r.translate("readiness.col.node")</th>
+                    <th>$r.translate("readiness.col.category")</th>
+                    <th>$r.translate("readiness.col.fix")</th>
+                </tr>
+            </thead>
+            <tbody>
+                #foreach($issue in $errorIssues)
+                <tr class="o_issue_error">
+                    <td>
+                        <i class="o_icon $issue.severityIcon"></i>
+                        $issue.message
+                    </td>
+                    <td>#if($issue.nodeName)$issue.nodeName#else-#end</td>
+                    <td><span class="o_labeled">$issue.category</span></td>
+                    <td>
+                        #if($issue.suggestedFix)
+                            <span class="text-muted">$issue.suggestedFix</span>
+                        #end
+                        #if($issue.autoFixable)
+                            <span class="o_badge o_badge_success">$r.translate("readiness.autofixable")</span>
+                        #end
+                    </td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    #end
+    
+    #if($warningIssues && $warningIssues.size() > 0)
+    <div class="o_readiness_section">
+        <h5><i class="o_icon o_icon_warn"></i> $r.translate("readiness.section.warnings")</h5>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>$r.translate("readiness.col.issue")</th>
+                    <th>$r.translate("readiness.col.node")</th>
+                    <th>$r.translate("readiness.col.category")</th>
+                    <th>$r.translate("readiness.col.fix")</th>
+                </tr>
+            </thead>
+            <tbody>
+                #foreach($issue in $warningIssues)
+                <tr class="o_issue_warning">
+                    <td>
+                        <i class="o_icon $issue.severityIcon"></i>
+                        $issue.message
+                    </td>
+                    <td>#if($issue.nodeName)$issue.nodeName#else-#end</td>
+                    <td><span class="o_labeled">$issue.category</span></td>
+                    <td>
+                        #if($issue.suggestedFix)
+                            <span class="text-muted">$issue.suggestedFix</span>
+                        #end
+                        #if($issue.autoFixable)
+                            <span class="o_badge o_badge_success">$r.translate("readiness.autofixable")</span>
+                        #end
+                    </td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    #end
+    
+    #if($infoIssues && $infoIssues.size() > 0)
+    <div class="o_readiness_section o_info">
+        <h5><i class="o_icon o_icon_info"></i> $r.translate("readiness.section.info")</h5>
+        <table class="table table-striped table-hover">
+            <tbody>
+                #foreach($issue in $infoIssues)
+                <tr class="o_issue_info">
+                    <td>
+                        <i class="o_icon $issue.severityIcon"></i>
+                        $issue.message
+                    </td>
+                    <td>#if($issue.nodeName)$issue.nodeName#else-#end</td>
+                </tr>
+                #end
+            </tbody>
+        </table>
+    </div>
+    #end
+    
+    #if($totalIssues == 0)
+    <div class="o_readiness_noissues o_success">
+        <p><i class="o_icon o_icon_status_done"></i> $r.translate("readiness.noissues")</p>
+    </div>
+    #end
+    
+    <div class="o_button_group">
+        $r.render("readiness.refresh")
+        $r.render("close")
+    </div>
+</div>
