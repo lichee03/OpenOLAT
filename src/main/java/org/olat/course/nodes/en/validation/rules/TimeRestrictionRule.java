@@ -50,7 +50,6 @@ public class TimeRestrictionRule implements PrerequisiteRule {
     @Override
     public EnrollmentEligibility validate(Identity identity, BusinessGroup group, 
                                          ENCourseNode courseNode, UserCourseEnvironment userCourseEnv) {
-        
         ModuleConfiguration config = courseNode.getModuleConfiguration();
         Date now = new Date();
         
@@ -62,7 +61,6 @@ public class TimeRestrictionRule implements PrerequisiteRule {
             return EnrollmentEligibility.notEligible(
                     String.format("Enrollment opens on %s", formattedDate));
         }
-        
         // Check enrollment end date
         Date enrollmentEnd = (Date) config.get(ENCourseNode.CONF_ENROLLMENT_END);
         if (enrollmentEnd != null && now.after(enrollmentEnd)) {
@@ -71,7 +69,6 @@ public class TimeRestrictionRule implements PrerequisiteRule {
             return EnrollmentEligibility.notEligible(
                     String.format("Enrollment closed on %s", formattedDate));
         }
-        
         // Add warning if enrollment closes soon (within 24 hours)
         if (enrollmentEnd != null) {
             long timeUntilEnd = enrollmentEnd.getTime() - now.getTime();
@@ -87,7 +84,6 @@ public class TimeRestrictionRule implements PrerequisiteRule {
                         .build();
             }
         }
-        
         return EnrollmentEligibility.eligible();
     }
     
