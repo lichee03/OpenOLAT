@@ -73,7 +73,7 @@ public class BulkStaffAssignmentController extends FormBasicController {
     private BulkStaffAssignmentService bulkAssignmentService;
     
     public BulkStaffAssignmentController(UserRequest ureq, WindowControl wControl, RepositoryEntry repoEntry) {
-        super(ureq, wControl, "bulk_staff_assignment");
+        super(ureq, wControl);
         this.repoEntry = repoEntry;
         this.validIdentities = new ArrayList<>();
         this.invalidUsernames = new ArrayList<>();
