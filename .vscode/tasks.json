@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Maven: Clean Install",
+      "type": "shell",
+      "command": "mvn clean install -DskipTests=true -Ptomcat",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Compile",
+      "type": "shell",
+      "command": "mvn compile -Ptomcat",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Package WAR",
+      "type": "shell",
+      "command": "mvn clean package -DskipTests=true -Ptomcat",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Run Tests (PostgreSQL)",
+      "type": "shell",
+      "command": "mvn test -Dwith-postgresql -Ptomcat",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Update Dependencies",
+      "type": "shell",
+      "command": "mvn dependency:resolve",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: Compress JS/CSS",
+      "type": "shell",
+      "command": "mvn clean package -Pcompressjs,tomcat",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug OpenOLAT with Tomcat",
+      "request": "launch",
+      "mainClass": "org.apache.catalina.startup.Bootstrap",
+      "args": "start",
+      "vmArgs": "-XX:+UseG1GC -XX:+UseStringDeduplication -Xms256m -Xmx1024m -Djava.awt.headless=true -Dcatalina.home=${env:CATALINA_HOME} -Dcatalina.base=${env:CATALINA_HOME}",
+      "projectName": "OpenOLAT",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "CATALINA_HOME": "C:/apache-tomcat-10.1"
+      },
+      "console": "integratedTerminal"
+    }
+  ]
+}

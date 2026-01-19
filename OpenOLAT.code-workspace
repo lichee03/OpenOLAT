@@ -1,0 +1,35 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "maven.executable.path": "mvn",
+    "java.jdt.ls.vmargs": "-XX:+UseG1GC -XX:+UseStringDeduplication -Xms256m -Xmx2048m",
+    "files.exclude": {
+      "**/target": true,
+      "**/.settings": true,
+      "**/.classpath": true,
+      "**/.project": true,
+      "**/.factorypath": true,
+    },
+    "java.configuration.maven.userSettings": null,
+    "java.import.maven.enabled": true,
+    "maven.terminal.useJavaHome": true,
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "vscjava.vscode-maven",
+      "redhat.vscode-community-server-connector",
+      "vscjava.vscode-spring-initializr",
+      "redhat.java",
+      "vscjava.vscode-java-debug",
+      "vscjava.vscode-java-test",
+      "vscjava.vscode-java-dependency",
+    ],
+  },
+}

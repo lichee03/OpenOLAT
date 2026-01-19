@@ -1,0 +1,33 @@
+{
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "C:\\Program Files\\Java\\jdk-17.0.13+11",
+      "default": true
+    }
+  ],
+  "java.jdt.ls.vmargs": "-XX:+UseG1GC -XX:+UseStringDeduplication -Xms256m -Xmx4096m -Djava.awt.headless=true",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.import.maven.enabled": true,
+  "maven.terminal.useJavaHome": true,
+  "maven.executable.path": "C:\\Program Files\\Apache\\Maven\\bin\\mvn.cmd",
+  "maven.executable.preferMavenWrapper": false,
+  "terminal.integrated.env.windows": {
+    "JAVA_HOME": "C:\\Program Files\\Java\\jdk-17.0.13+11",
+    "PATH": "C:\\Program Files\\Java\\jdk-17.0.13+11\\bin;C:\\Program Files\\Apache\\Maven\\bin;${env:PATH}"
+  },
+  "files.exclude": {
+    "**/target": true,
+    "**/.settings": true,
+    "**/.classpath": true,
+    "**/.project": true
+  },
+  "files.watcherExclude": {
+    "**/target/**": true
+  },
+  "search.exclude": {
+    "**/target": true,
+    "**/node_modules": true
+  },
+  "rsp-ui.rsp.java.home": "C:\\Program Files\\Java\\jdk-17.0.13+11"
+}
