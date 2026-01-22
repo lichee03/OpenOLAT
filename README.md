@@ -386,6 +386,24 @@ Righ-click on the class `Run as -> Run configuration`. Add your database configu
 ```
 Run the tests
 
+## Enhancements (enrollment&Registration-enhancement branch)
+
+This branch adds two enrollment-related enhancements to OpenOLAT:
+
+- **Automated prerequisite & eligibility checking**
+  - Implemented an OSGi-based validation engine that runs prerequisite rules before enrollment attempts.
+  - Key components: `org/olat/course/nodes/en/validation` (rules and `PrerequisiteValidationService`), concrete rules such as `TimeRestrictionRule`, `CapacityRule`, `AlreadyEnrolledRule`, and `MultipleEnrollmentRule`.
+  - Purpose: prevent invalid enrollments (outside enrollment windows, over-capacity, duplicate enrollments) and provide clear error/warning messages to users.
+
+- **Enrollment Periods with Auto-Actions (Waiting List automation)**
+  - Adds enrollment period configuration keys to `ENCourseNode` (`CONF_ENROLLMENT_BEGIN`, `CONF_ENROLLMENT_END`, and related auto-action flags).
+  - Scheduled detection of period transitions via `EnrollmentPeriodScheduler` (runs periodically and triggers actions within a grace window).
+  - Auto-action execution in `EnrollmentPeriodAutoActionService` (process waitlist, send notifications, and record actions to avoid duplicates).
+  - Waitlist promotion implemented in `EnrollmentManager.moveFromWaitingListToParticipant()` (capacity checks, property updates, email notifications).
+  - Action tracking entity/DAO: `org/olat/course/nodes/en/model/EnrollmentPeriodAction` and `EnrollmentPeriodActionDAO`, with DB schema in `src/main/resources/database/*/alter_enrollment_period_actions.sql`.
+
+These enhancements are implemented to be configurable per enrollment node and extensible via the OSGi rule system.
+
 
 #### Execute JUnit tests on the command line
 
