@@ -72,6 +72,7 @@ class NotificationSubscriptionTableDataModel extends DefaultFlexiTableDataModel<
 			case statusToggle -> row.getStatusToggle();
 			case creationDate -> row.getCreationDate();
 			case lastEmail -> row.getLastEmail();
+			case frequency -> row.getFrequencySelection();
 			case deleteLink -> row.getDeleteLink();
 			default -> "ERROR";
 		};

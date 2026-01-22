@@ -636,6 +636,19 @@
 							</webResources>
 						</configuration>
 					</plugin>
+					<plugin>
+						<groupId>org.eclipse.jetty</groupId>
+						<artifactId>jetty-maven-plugin</artifactId>
+						<version>11.0.15</version>
+						<configuration>
+							<webApp>
+								<contextPath>/olat</contextPath>
+							</webApp>
+							<httpConnector>
+								<port>8080</port>
+							</httpConnector>
+						</configuration>
+					</plugin>
 				</plugins>
 			</build>
 		</profile>

@@ -746,6 +746,11 @@ public class MessageListController extends BasicController implements GenericEve
 					// Show buttons only if user is thread author OR has moderator permission
 					if (parentMessage != null && parentMessage.getCreator() != null && 
 						(getIdentity().getKey().equals(parentMessage.getCreator().getKey()) || foCallback.mayMarkBestAnswer())) {
+						
+						// Remove potential stale components to prevent double buttons
+						mainVC.remove("mark_best_".concat(keyString));
+						mainVC.remove("unmark_best_".concat(keyString));
+
 						// Show the appropriate button based on best answer status
 						if (fullMessage.isBestAnswer()) {
 							Link unmarkBestAnswerLink = LinkFactory.createCustomLink("unmark_best_".concat(keyString), "unmark_best", "msg.best.answer.unmark", Link.BUTTON_SMALL, mainVC, this);
@@ -1637,6 +1642,14 @@ public class MessageListController extends BasicController implements GenericEve
 		
 		@Override
 		public int compareTo(MessageNode arg0) {
+			boolean best1 = message.isBestAnswer();
+			boolean best2 = arg0.getMessage().isBestAnswer();
+			
+			if(best1 && !best2) {
+				return -1;
+			} else if(!best1 && best2) {
+				return 1;
+			}
 			return message.getCreationDate().compareTo(arg0.getMessage().getCreationDate());
 		}
 	}

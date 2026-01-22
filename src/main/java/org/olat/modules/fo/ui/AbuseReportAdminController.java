@@ -31,6 +31,7 @@ import org.olat.core.gui.components.form.flexible.elements.FormLink;
 import org.olat.core.gui.components.form.flexible.impl.FormBasicController;
 import org.olat.core.gui.components.form.flexible.impl.FormEvent;
 import org.olat.core.gui.components.form.flexible.impl.elements.table.DefaultFlexiColumnModel;
+import org.olat.core.gui.components.form.flexible.impl.elements.table.FlexiColumnModel;
 import org.olat.core.gui.components.form.flexible.impl.elements.table.FlexiTableColumnModel;
 import org.olat.core.gui.components.form.flexible.impl.elements.table.FlexiTableDataModelFactory;
 import org.olat.core.gui.components.link.Link;
@@ -75,26 +76,32 @@ public class AbuseReportAdminController extends FormBasicController {
 	private UserManager userManager;
 	
 	public AbuseReportAdminController(UserRequest ureq, WindowControl wControl, Forum forum) {
-		super(ureq, wControl);
+		super(ureq, wControl, "AbuseReportAdminController");
 		setTranslator(Util.createPackageTranslator(Forum.class, getLocale(), getTranslator()));
 		this.forum = forum;
 		this.formatter = Formatter.getInstance(getLocale());
 		initForm(ureq);
 		loadModel();
 	}
-
+	
 	@Override
 	protected void initForm(FormItemContainer formLayout, Controller listener, UserRequest ureq) {
+		// Use custom template to avoid floating buttons
 		setFormTitle("abuse.reports.admin.title");
 		
 		FlexiTableColumnModel columnsModel = FlexiTableDataModelFactory.createFlexiTableColumnModel();
-		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.message));
+		// Use custom renderer for message to show title and body
+		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.message.i18nHeaderKey(), AbuseReportCols.message.ordinal(), "message",
+				new AbuseReportMessageCellRenderer()));
 		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.reporter));
 		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.date));
 		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.reason));
 		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel(AbuseReportCols.status));
-		columnsModel.addFlexiColumnModel(new DefaultFlexiColumnModel("abuse.reports.actions", AbuseReportCols.actions.ordinal(), "actions", 
-				new AbuseReportActionsCellRenderer()));
+		// Use custom renderer for actions and align right
+		DefaultFlexiColumnModel actionsCol = new DefaultFlexiColumnModel("abuse.reports.actions", AbuseReportCols.actions.ordinal(), "actions", 
+				new AbuseReportActionsCellRenderer());
+		actionsCol.setAlignment(FlexiColumnModel.ALIGNMENT_RIGHT);
+		columnsModel.addFlexiColumnModel(actionsCol);
 		
 		dataModel = new AbuseReportDataModel(columnsModel, getTranslator());
 		tableEl = uifactory.addTableElement(getWindowControl(), "reports", dataModel, getTranslator(), formLayout);
@@ -112,6 +119,7 @@ public class AbuseReportAdminController extends FormBasicController {
 			AbuseReportRow row = new AbuseReportRow();
 			row.setReport(report);
 			row.setMessageTitle(message.getTitle());
+			row.setMessageBody(message.getBody());
 			row.setReporterName(userManager.getUserDisplayName(reporter));
 			row.setReportDate(formatter.formatDateAndTime(report.getCreationDate()));
 			row.setReason(report.getReason());
@@ -119,12 +127,12 @@ public class AbuseReportAdminController extends FormBasicController {
 			
 			// Create action buttons
 			FormLink dismissLink = uifactory.addFormLink("dismiss_" + report.getKey(), "dismiss", "abuse.reports.dismiss", 
-					null, flc, Link.LINK);
+					null, flc, Link.BUTTON_SMALL);
 			dismissLink.setUserObject(row);
 			row.setDismissLink(dismissLink);
 			
 			FormLink actionLink = uifactory.addFormLink("action_" + report.getKey(), "action", "abuse.reports.take.action", 
-					null, flc, Link.LINK);
+					null, flc, Link.BUTTON_SMALL);
 			actionLink.setUserObject(row);
 			row.setActionLink(actionLink);
 			
@@ -216,6 +224,7 @@ public class AbuseReportAdminController extends FormBasicController {
 	public static class AbuseReportRow {
 		private AbuseReport report;
 		private String messageTitle;
+		private String messageBody;
 		private String reporterName;
 		private String reportDate;
 		private String reason;
@@ -237,6 +246,14 @@ public class AbuseReportAdminController extends FormBasicController {
 		
 		public void setMessageTitle(String messageTitle) {
 			this.messageTitle = messageTitle;
+		}
+
+		public String getMessageBody() {
+			return messageBody;
+		}
+
+		public void setMessageBody(String messageBody) {
+			this.messageBody = messageBody;
 		}
 		
 		public String getReporterName() {

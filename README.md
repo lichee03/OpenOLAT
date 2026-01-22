@@ -51,5 +51,14 @@ These enhancements reduce manual effort and improve assessment consistency witho
 ### 4. Scheduling Module
 *Details to be added...*
 
-### 5. Communication Module
-*Details to be added...*
+### 5. Communication and Collaboration Module
+
+The following enhancements were implemented to improve forum interaction, community moderation, and knowledge discovery:
+
+| Enhancement                    | Description                                                                                          |
+|--------------------------------|------------------------------------------------------------------------------------------------------|
+| **Q&A Thread with Best Answer** | Enables thread authors and moderators to mark helpful replies as "Best Answer" for quick knowledge discovery |
+| **Report Abuse User Interface** | Provides students/participants with a simple interface to report inappropriate messages directly to moderators |
+| **Moderator Dashboard**        | Offers a centralized admin panel for moderators to review, dismiss, or take action on abuse reports |
+
+These enhancements promote community self-moderation, improve forum content quality, and streamline moderator workflows without affecting core forum functionality.
