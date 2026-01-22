@@ -55,5 +55,7 @@ public interface MessageLight extends MessageRef {
 	public Long getParentKey();
 	
 	public MessageRef getThreadtop();
+	
+	public boolean isBestAnswer();
 
 }

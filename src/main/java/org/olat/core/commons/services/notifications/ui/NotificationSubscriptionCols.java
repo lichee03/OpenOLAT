@@ -35,6 +35,7 @@ public enum NotificationSubscriptionCols implements FlexiSortableColumnDef {
 	statusToggle("table.column.status"),
 	creationDate("table.column.creationDate"),
 	lastEmail("table.column.lastEmail"),
+	frequency("table.column.frequency"),
 	deleteLink("table.column.delete.action");
 
 	private final String i18nKey;

@@ -41,6 +41,7 @@ import org.olat.core.gui.components.form.flexible.elements.FlexiTableExtendedFil
 import org.olat.core.gui.components.form.flexible.elements.FlexiTableFilter;
 import org.olat.core.gui.components.form.flexible.elements.FormLink;
 import org.olat.core.gui.components.form.flexible.elements.FormToggle;
+import org.olat.core.gui.components.form.flexible.elements.SingleSelection;
 import org.olat.core.gui.components.form.flexible.impl.FormBasicController;
 import org.olat.core.gui.components.form.flexible.impl.FormEvent;
 import org.olat.core.gui.components.form.flexible.impl.elements.table.DefaultFlexiColumnModel;
@@ -67,6 +68,8 @@ import org.olat.course.CourseFactory;
 import org.olat.course.ICourse;
 import org.olat.course.nodes.CourseNode;
 import org.olat.modules.project.ProjProject;
+import org.olat.properties.Property;
+import org.olat.properties.PropertyManager;
 import org.olat.repository.ui.RepositoyUIFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -102,6 +105,8 @@ public class NotificationSubscriptionController extends FormBasicController {
 
 	@Autowired
 	private NotificationsManager notificationsManager;
+	@Autowired
+	private PropertyManager propertyManager;
 
 
 	public NotificationSubscriptionController(
@@ -160,6 +165,7 @@ public class NotificationSubscriptionController extends FormBasicController {
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(NotificationSubscriptionCols.subRes));
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(NotificationSubscriptionCols.addDesc));
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(NotificationSubscriptionCols.statusToggle));
+		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(NotificationSubscriptionCols.frequency)); // Add Frequency Column
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(adminColumns, NotificationSubscriptionCols.creationDate));
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(adminColumns, NotificationSubscriptionCols.lastEmail));
 		tableColumnModel.addFlexiColumnModel(new DefaultFlexiColumnModel(NotificationSubscriptionCols.deleteLink));
@@ -192,6 +198,44 @@ public class NotificationSubscriptionController extends FormBasicController {
 
 		if (!pub.getResId().equals(0L)) {
 			deleteLink = uifactory.addFormLink("delete_" + sub.getKey().toString(), FORMLINK_DELETE, "table.column.delete.action", null, flc, Link.LINK);
+		}
+		
+		// Frequency Selector
+		SelectionValues frequencyKV = new SelectionValues();
+		frequencyKV.add(SelectionValues.entry("never", translate("frequency.never")));
+		frequencyKV.add(SelectionValues.entry("monthly", translate("frequency.monthly")));
+		frequencyKV.add(SelectionValues.entry("weekly", translate("frequency.weekly")));
+		frequencyKV.add(SelectionValues.entry("daily", translate("frequency.daily")));
+		frequencyKV.add(SelectionValues.entry("half-daily", translate("frequency.half-daily")));
+		frequencyKV.add(SelectionValues.entry("four-hourly", translate("frequency.four-hourly")));
+		frequencyKV.add(SelectionValues.entry("two-hourly", translate("frequency.two-hourly")));
+
+
+		SingleSelection frequencyEl = uifactory.addDropdownSingleselect("frequency_" + sub.getKey(), null, flc, frequencyKV.keys(), frequencyKV.values());
+		frequencyEl.addActionListener(FormEvent.ONCHANGE);
+		
+		// Set current selected value from user property
+		String type = pub.getType();
+		String key = "noti_interval_" + type;
+		Property p = propertyManager.findProperty(sub.getIdentity(), null, null, null, key);
+		if(p != null && StringHelper.containsNonWhitespace(p.getStringValue())) {
+			String currentVal = p.getStringValue();
+			if(frequencyKV.containsKey(currentVal)) {
+				frequencyEl.select(currentVal, true);
+			} else {
+				// Fallback to global default if specific is invalid, or just select nothing (native default)
+				// Here we just default to the user global pref or system default
+				String global = notificationsManager.getUserIntervalOrDefault(sub.getIdentity());
+				if(frequencyKV.containsKey(global)) {
+					frequencyEl.select(global, true);
+				}
+			}
+		} else {
+			// Fallback to global default
+			String global = notificationsManager.getUserIntervalOrDefault(sub.getIdentity());
+			if(frequencyKV.containsKey(global)) {
+				frequencyEl.select(global, true);
+			}
 		}
 
 		NotificationsHandler handler = notificationsManager.getNotificationsHandler(pub);
@@ -271,10 +315,11 @@ public class NotificationSubscriptionController extends FormBasicController {
 		subRes.setIconLeftCSS(iconCssFromHandler);
 
 		NotificationSubscriptionRow row = new NotificationSubscriptionRow(section, pub, learningResource, subRes, addDesc, statusToggle,
-				sub.getCreationDate(), sub.getLatestEmailed(), deleteLink, sub.getKey());
+				sub.getCreationDate(), sub.getLatestEmailed(), deleteLink, sub.getKey(), frequencyEl);
 		learningResource.setUserObject(row);
 		subRes.setUserObject(row);
 		statusToggle.setUserObject(row);
+		frequencyEl.setUserObject(row);
 		if (deleteLink != null) {
 			deleteLink.setUserObject(row);
 		}
@@ -377,6 +422,27 @@ public class NotificationSubscriptionController extends FormBasicController {
 		} else if (source instanceof FormToggle toggle && toggle.getUserObject() instanceof NotificationSubscriptionRow row) {
 			Subscriber subscriber = notificationsManager.getSubscriber(row.getKey());
 			notificationsManager.updateSubscriber(subscriber, toggle.isOn());
+		} else if (source instanceof SingleSelection dropdown && dropdown.getUserObject() instanceof NotificationSubscriptionRow row) {
+			// Handle Frequency Change
+			Subscriber subscriber = notificationsManager.getSubscriber(row.getKey());
+			if (subscriber != null) {
+				String type = subscriber.getPublisher().getType();
+				String selectedInterval = dropdown.getSelectedKey();
+				Identity ident = subscriber.getIdentity();
+				
+				// Save as user property
+				String key = "noti_interval_" + type;
+				Property p = propertyManager.findProperty(ident, null, null, null, key);
+				if(p == null) {
+					p = propertyManager.createUserPropertyInstance(ident, null, key, null, null, selectedInterval, null);
+					propertyManager.saveProperty(p);
+				} else {
+					p.setStringValue(selectedInterval);
+					propertyManager.updateProperty(p);
+				}
+				// create temporary translator for success message (reusing existing one if possible or creating new)
+				showInfo("Preferences saved for " + type);
+			}
 		} else if (source instanceof FormLink link) {
 			String cmd = link.getCmd();
 			if (cmd.equals(FORMLINK_LEARNING_RESOURCE) || cmd.equals(FORMLINK_SUB_RES) || cmd.equals(FORMLINK_DELETE)) {

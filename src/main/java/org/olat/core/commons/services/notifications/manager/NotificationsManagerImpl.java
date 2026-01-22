@@ -366,19 +366,15 @@ public class NotificationsManagerImpl implements NotificationsManager, UserDataD
 			return;//send only to active user
 		}
 		
-		String userInterval = getUserIntervalOrDefault(ident);
-		if("never".equals(userInterval)) {
-			return;
-		}
-
 		long start = System.currentTimeMillis();
-		Date compareDate = getCompareDateFromInterval(userInterval);
+		// Date compareDate = getCompareDateFromInterval(userInterval); // Moved inside loop
 		Property p = propertyManager.findProperty(ident, null, null, null, LATEST_EMAIL_USER_PROP);
 		if(p != null) {
 		  	Date latestEmail = new Date(p.getLongValue());
-		  	if(latestEmail.after(compareDate)) {
-		  		return;//nothing to do
-		  	}
+		  	// If global check needed, we can do it here, but granular check is better inside logic
+		  	// if(latestEmail.after(compareDate)) {
+		  	// 	return;//nothing to do
+		  	// }
 		}
 
 		Date defaultCompareDate = getDefaultCompareDate();
@@ -402,10 +398,14 @@ public class NotificationsManagerImpl implements NotificationsManager, UserDataD
 				continue;
 			}
 			
+			// Get interval specific to this publisher type
+			String userInterval = getUserIntervalForType(ident, sub.getPublisher().getType());
+			Date compareDateForSub = getCompareDateFromInterval(userInterval);
+			
 			Date latestEmail = sub.getLatestEmailed();
 		
 			SubscriptionItem subsitem = null;
-			if (latestEmail == null || compareDate.after(latestEmail)){
+			if (latestEmail == null || compareDateForSub.after(latestEmail)){
 				// no notif. ever sent until now
 				if (latestEmail == null) {
 					latestEmail = defaultCompareDate;
@@ -414,7 +414,7 @@ public class NotificationsManagerImpl implements NotificationsManager, UserDataD
 					latestEmail = defaultCompareDate;
 				}
 				subsitem = createSubscriptionItem(sub, locale, SubscriptionInfo.MIME_HTML, SubscriptionInfo.MIME_HTML, latestEmail);
-			}	else if(latestEmail != null && latestEmail.after(compareDate)) {
+			}	else if(latestEmail != null && latestEmail.after(compareDateForSub)) {
 				//already send an email within the user's settings interval
 				//veto = true;
 			}
@@ -503,6 +503,20 @@ public class NotificationsManagerImpl implements NotificationsManager, UserDataD
 			userInterval = getDefaultNotificationInterval();
 		}
 		return userInterval;
+	}
+
+	public String getUserIntervalForType(Identity ident, String type) {
+		// Check for specific property first
+		// property key format: noti_interval_[HandlerType] e.g. noti_interval_Forum
+		String key = "noti_interval_" + type;
+		Property p = propertyManager.findProperty(ident, null, null, null, key);
+		if(p != null && StringHelper.containsNonWhitespace(p.getStringValue())) {
+			String specificInterval = p.getStringValue();
+			log.info(Tracing.M_AUDIT, "Found specific interval for user {} type {}: {}", ident.getKey(), type, specificInterval);
+			return specificInterval;
+		}
+		// Fallback to global default
+		return getUserIntervalOrDefault(ident);
 	}
 	
 	@Override

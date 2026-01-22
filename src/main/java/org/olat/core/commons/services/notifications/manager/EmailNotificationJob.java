@@ -44,6 +44,7 @@ public class EmailNotificationJob extends JobWithDB {
 
 	@Override
 	public void executeWithDB(JobExecutionContext arg0) throws JobExecutionException {
+		System.out.println("!!! DEBUG: EmailNotificationJob executing !!!");
 		CoreSpringFactory.getImpl(NotificationsManager.class).notifyAllSubscribersByEmail();
 	}
 

@@ -54,7 +54,7 @@ public class AbuseReportDataModel extends DefaultFlexiTableDataModel<AbuseReport
 	@Override
 	public Object getValueAt(AbuseReportRow row, int col) {
 		switch(AbuseReportCols.values()[col]) {
-			case message: return row.getMessageTitle();
+			case message: return row; // Renderer needs the whole row
 			case reporter: return row.getReporterName();
 			case date: return row.getReportDate();
 			case reason: return row.getReason();
