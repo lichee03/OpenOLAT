@@ -53,7 +53,16 @@ The Enrollment Module adds flexible enrollment management for courses, including
 | **Automated Prerequisite & Eligibility Checking**                   | Implements rule-based eligibility validation to prevent invalid enrollments (outside enrollment windows, over-capacity, duplicate enrollments).
 | **Enrollment Periods with Auto-Actions (Waiting List automation)** | Auto-actions are executed by `EnrollmentPeriodAutoActionService` to process waiting lists, send notifications, and record executed actions to avoid duplicates.|
 ### 4. Scheduling Module
-*Details to be added...*
+
+The Scheduling Module introduces intelligent automation and conflict management to streamline personal and group calendar organization.
+
+| Enhancement | Description |
+| :--- | :--- |
+| **Smart Quick Add (NLP)** | Implements a "One-Box" entry system where users can type natural language phrases (e.g., "Meeting next Friday at 2pm") to create events instantly without manual date picking. |
+| **Real-Time Conflict Detection** | Proactively scans the user's schedule during event creation and warns of overlaps before the event is saved, preventing accidental double-booking. |
+| **Personalized "My View" Filtering** | Provides a dedicated view that isolates the user's personal commitments from broad group or course-wide events, reducing calendar clutter. |
+| **Smart Visual Cues** | Adds distinct visual indicators (e.g., specific icons or highlights) for different event types, making it easier to distinguish between quick reminders, formal classes, and group meetings at a glance. |
+
 
 ### 5. Communication and Collaboration Module
 
