@@ -2,48 +2,34 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Maven: Clean Install",
+      "label": "Maven: package (no tests)",
       "type": "shell",
-      "command": "mvn clean install -DskipTests=true -Ptomcat",
-      "group": "build",
-      "problemMatcher": []
-    },
-    {
-      "label": "Maven: Compile",
-      "type": "shell",
-      "command": "mvn compile -Ptomcat",
+      "command": "mvn clean package -Pcompressjs,tomcat -DskipTests",
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": []
+      "presentation": {
+        "reveal": "always"
+      }
     },
     {
-      "label": "Maven: Package WAR",
+      "label": "Maven: run template tests",
       "type": "shell",
-      "command": "mvn clean package -DskipTests=true -Ptomcat",
-      "group": "build",
-      "problemMatcher": []
-    },
-    {
-      "label": "Maven: Run Tests (PostgreSQL)",
-      "type": "shell",
-      "command": "mvn test -Dwith-postgresql -Ptomcat",
+      "command": "mvn -Dtest=org.olat.modules.assessment.service.AssessmentTemplateServiceTest test",
       "group": "test",
-      "problemMatcher": []
+      "presentation": {
+        "reveal": "always"
+      }
     },
     {
-      "label": "Maven: Update Dependencies",
+      "label": "Maven: full tests",
       "type": "shell",
-      "command": "mvn dependency:resolve",
-      "problemMatcher": []
-    },
-    {
-      "label": "Maven: Compress JS/CSS",
-      "type": "shell",
-      "command": "mvn clean package -Pcompressjs,tomcat",
-      "group": "build",
-      "problemMatcher": []
+      "command": "mvn test",
+      "group": "test",
+      "presentation": {
+        "reveal": "always"
+      }
     }
   ]
 }

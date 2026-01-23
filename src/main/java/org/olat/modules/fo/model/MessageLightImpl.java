@@ -103,8 +103,12 @@ public class MessageLightImpl implements MessageLight, CreateInfo, Persistable, 
 	@JoinColumn(name="creator_id", nullable=true, insertable=true, updatable=false)
 	private Identity creator;
 	@ManyToOne(targetEntity=IdentityImpl.class,fetch=FetchType.LAZY,optional=true)
+
 	@JoinColumn(name="modifier_id", nullable=true, insertable=true, updatable=true)
 	private Identity modifier;
+	
+	@Column(name="is_best_answer", nullable=false, insertable=false, updatable=false)
+	private boolean bestAnswer;
 
 	@Override
 	public Long getKey() {
@@ -206,5 +210,9 @@ public class MessageLightImpl implements MessageLight, CreateInfo, Persistable, 
 			return 1;
 		}
 		return 0;
+	}
+	@Override
+	public boolean isBestAnswer() {
+		return bestAnswer;
 	}
 }

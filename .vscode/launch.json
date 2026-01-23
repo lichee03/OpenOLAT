@@ -1,19 +1,33 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "java",
-      "name": "Debug OpenOLAT with Tomcat",
-      "request": "launch",
-      "mainClass": "org.apache.catalina.startup.Bootstrap",
-      "args": "start",
-      "vmArgs": "-XX:+UseG1GC -XX:+UseStringDeduplication -Xms256m -Xmx1024m -Djava.awt.headless=true -Dcatalina.home=${env:CATALINA_HOME} -Dcatalina.base=${env:CATALINA_HOME}",
-      "projectName": "OpenOLAT",
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "CATALINA_HOME": "C:/apache-tomcat-10.1"
-      },
-      "console": "integratedTerminal"
-    }
-  ]
+
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Attach) - Tomcat",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005,
+            "timeout": 30000,
+            "projectName": "openolat-lms"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Attach) - Tomcat (Custom Port)",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": "${input:debugPort}",
+            "timeout": 30000,
+            "projectName": "openolat-lms"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "debugPort",
+            "type": "promptString",
+            "description": "Enter the debug port number:",
+            "default": "5005"
+        }
+    ]
+
 }

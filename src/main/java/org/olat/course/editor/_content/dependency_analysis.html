@@ -1,0 +1,213 @@
+<div class="o_dependency_analysis">
+    <div class="o_info_box">
+        <h4>
+            <i class="o_icon o_icon_copy"></i> 
+            $r.translate("dependency.analysis.title")
+        </h4>
+        <p class="o_hint">
+            $r.translate("dependency.analysis.intro", $nodeTitle, $nodeType)
+        </p>
+    </div>
+    
+    #if($hasAnyDependencies)
+        ## Dependencies: What this node depends on
+        #if($hasDependencies)
+        <div class="o_dependency_section">
+            <h5><i class="o_icon o_icon_dependency"></i> $r.translate("dependency.depends.on")</h5>
+            <p class="text-muted">$r.translate("dependency.depends.on.desc")</p>
+            <table class="table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th>$r.translate("dependency.col.node")</th>
+                        <th>$r.translate("dependency.col.type")</th>
+                        <th>$r.translate("dependency.col.dependency.type")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                #foreach($dep in $dependencies)
+                    <tr>
+                        <td>
+                            <i class="$dep.iconCss"></i>
+                            $dep.title
+                        </td>
+                        <td><span class="o_labeled">$dep.type</span></td>
+                        <td><span class="o_tag o_tag_dep">$dep.dependencyType</span></td>
+                    </tr>
+                #end
+                </tbody>
+            </table>
+        </div>
+        #end
+        
+        ## Referenced By: What depends on this node
+        #if($hasReferencedBy)
+        <div class="o_dependency_section">
+            <h5><i class="o_icon o_icon_referenced"></i> $r.translate("dependency.referenced.by")</h5>
+            <p class="text-muted">$r.translate("dependency.referenced.by.desc")</p>
+            <div class="o_warning">
+                <i class="o_icon o_icon_warn"></i>
+                $r.translate("dependency.referenced.by.warning")
+            </div>
+            <table class="table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th>$r.translate("dependency.col.node")</th>
+                        <th>$r.translate("dependency.col.type")</th>
+                        <th>$r.translate("dependency.col.dependency.type")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                #foreach($ref in $referencedBy)
+                    <tr>
+                        <td>
+                            <i class="$ref.iconCss"></i>
+                            $ref.title
+                        </td>
+                        <td><span class="o_labeled">$ref.type</span></td>
+                        <td><span class="o_tag o_tag_ref">$ref.dependencyType</span></td>
+                    </tr>
+                #end
+                </tbody>
+            </table>
+        </div>
+        #end
+        
+        ## Dependency Types Summary
+        #if($dependencyTypes && $dependencyTypes.size() > 0)
+        <div class="o_dependency_types_summary">
+            <h5>$r.translate("dependency.types.found")</h5>
+            <ul>
+            #foreach($typeDesc in $dependencyTypes)
+                <li><i class="o_icon o_icon_check"></i> $typeDesc</li>
+            #end
+            </ul>
+        </div>
+        #end
+        
+        ## Warnings
+        #if($warnings && $warnings.size() > 0)
+        <div class="o_warning_list">
+            <h5><i class="o_icon o_icon_warn"></i> $r.translate("dependency.warnings")</h5>
+            <ul class="o_warnings">
+            #foreach($warning in $warnings)
+                <li>$warning</li>
+            #end
+            </ul>
+        </div>
+        #end
+        
+        ## Errors
+        #if($errors && $errors.size() > 0)
+        <div class="o_error_list">
+            <h5><i class="o_icon o_icon_error"></i> $r.translate("dependency.errors")</h5>
+            <ul class="o_errors">
+            #foreach($error in $errors)
+                <li>$error</li>
+            #end
+            </ul>
+        </div>
+        #end
+        
+        ## Explanation
+        <div class="o_callout o_callout_info">
+            <h5>$r.translate("dependency.copy.options.title")</h5>
+            <p><strong>$r.translate("dependency.copy.with.deps"):</strong> $r.translate("dependency.copy.with.deps.desc")</p>
+            <p><strong>$r.translate("dependency.copy.only"):</strong> $r.translate("dependency.copy.only.desc")</p>
+        </div>
+    #else
+        ## No dependencies found
+        <div class="o_note">
+            <i class="o_icon o_icon_ok"></i>
+            $r.translate("dependency.no.dependencies")
+        </div>
+    #end
+    
+    ## Buttons
+    <div class="o_button_group">
+        #if($hasDependencies)
+            $r.render("dependency.copy.with.deps")
+        #end
+        $r.render("dependency.copy.only")
+        $r.render("cancel")
+    </div>
+</div>
+
+<style>
+.o_dependency_analysis {
+    padding: 10px;
+}
+.o_dependency_section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+.o_dependency_section h5 {
+    margin-top: 0;
+    color: #555;
+}
+.o_tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+.o_tag_dep {
+    background: #d9edf7;
+    color: #31708f;
+}
+.o_tag_ref {
+    background: #fcf8e3;
+    color: #8a6d3b;
+}
+.o_warning {
+    padding: 10px;
+    background: #fcf8e3;
+    border-left: 3px solid #f0ad4e;
+    margin: 10px 0;
+}
+.o_warning_list, .o_error_list {
+    margin: 15px 0;
+    padding: 10px;
+}
+.o_warning_list {
+    background: #fcf8e3;
+    border-radius: 4px;
+}
+.o_error_list {
+    background: #f2dede;
+    border-radius: 4px;
+}
+.o_errors li {
+    color: #a94442;
+}
+.o_warnings li {
+    color: #8a6d3b;
+}
+.o_dependency_types_summary {
+    margin: 15px 0;
+}
+.o_callout {
+    padding: 15px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+.o_callout_info {
+    background: #d9edf7;
+    border-left: 4px solid #31708f;
+}
+.o_callout h5 {
+    margin-top: 0;
+}
+.o_note {
+    padding: 15px;
+    background: #dff0d8;
+    border-radius: 4px;
+    color: #3c763d;
+}
+.o_button_group {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+</style>

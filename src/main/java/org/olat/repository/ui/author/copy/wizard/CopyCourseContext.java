@@ -158,6 +158,11 @@ public class CopyCourseContext {
 	private Set<Long> selectedOrgKeys;
 	private boolean canCopy;
 	private boolean canDownload;
+	
+	// Enhancement 1: Selective Element Chooser
+	private boolean selectiveElementCopy;
+	private Set<String> selectedElementIds;
+	private boolean copySelectedLearningResources;
 
 	// Load config from module
 	public void loadFromWizardConfig(CopyCourseWizardModule wizardModule) {
@@ -817,6 +822,31 @@ public class CopyCourseContext {
 
 	public boolean isCanDownload() {
 		return canDownload;
+	}
+	
+	// Enhancement 1: Selective Element Chooser getters/setters
+	public boolean isSelectiveElementCopy() {
+		return selectiveElementCopy;
+	}
+	
+	public void setSelectiveElementCopy(boolean selectiveElementCopy) {
+		this.selectiveElementCopy = selectiveElementCopy;
+	}
+	
+	public Set<String> getSelectedElementIds() {
+		return selectedElementIds;
+	}
+	
+	public void setSelectedElementIds(Set<String> selectedElementIds) {
+		this.selectedElementIds = selectedElementIds;
+	}
+	
+	public boolean isCopySelectedLearningResources() {
+		return copySelectedLearningResources;
+	}
+	
+	public void setCopySelectedLearningResources(boolean copySelectedLearningResources) {
+		this.copySelectedLearningResources = copySelectedLearningResources;
 	}
 	
 	

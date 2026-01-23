@@ -156,6 +156,7 @@ public class MessageListController extends BasicController implements GenericEve
 	private DialogBoxController confirmDeleteCtrl, confirmSplitCtrl;
 	private ForumMessageListController moveCtrl, messageTableCtrl;
 	private StepsMainRunController exportCtrl;
+	private AbuseReportController abuseReportCtrl;
 	
 	private Message thread;
 	private boolean reloadList;
@@ -693,13 +694,13 @@ public class MessageListController extends BasicController implements GenericEve
 		}
 		
 		if(!isThreadClosed) {
-			if((numOfChildren == 0 && userIsMsgCreator && foCallback.mayDeleteOwnMessage()) || foCallback.mayDeleteMessageAsModerator()) {
+			if(numOfChildren == 0 && userIsMsgCreator && foCallback.mayDeleteOwnMessage()) {
 				Link deleteLink = LinkFactory.createCustomLink("dl_".concat(keyString), "dl", "msg.delete", Link.BUTTON_SMALL, mainVC, this);
 				deleteLink.setIconLeftCSS("o_icon o_icon-fw o_icon_delete_item");
 				deleteLink.setUserObject(messageView);
 			}
 			
-			if((numOfChildren == 0 && userIsMsgCreator && foCallback.mayEditOwnMessage()) || foCallback.mayEditMessageAsModerator()) {
+			if(numOfChildren == 0 && userIsMsgCreator && foCallback.mayEditOwnMessage()) {
 				Link editLink = LinkFactory.createCustomLink("ed_".concat(keyString), "ed", "msg.update", Link.BUTTON_SMALL, mainVC, this);
 				editLink.setIconLeftCSS("o_icon o_icon-fw o_icon_edit");
 				editLink.setUserObject(messageView);
@@ -730,6 +731,45 @@ public class MessageListController extends BasicController implements GenericEve
 				Link exileLink = LinkFactory.createCustomLink("exile_".concat(keyString), "exile", "msg.exile", Link.LINK, mainVC, this);
 				exileLink.setIconLeftCSS("o_icon o_icon-fw o_forum_status_thread_icon");
 				exileLink.setUserObject(messageView);				
+			}
+			
+			// Best Answer functionality - only for non-thread-top messages (replies)
+			if (!threadTop && !isThreadClosed) {
+				// Load full message to check best answer status
+				Message fullMessage = forumManager.getMessageById(m.getKey());
+				if (fullMessage != null && fullMessage.getThreadtop() != null) {
+					Message parentMessage = forumManager.getMessageById(fullMessage.getThreadtop().getKey());
+					// Show best answer badge to all users
+					if (fullMessage.isBestAnswer()) {
+						messageView.setBestAnswer(true);
+					}
+					// Show buttons only if user is thread author OR has moderator permission
+					if (parentMessage != null && parentMessage.getCreator() != null && 
+						(getIdentity().getKey().equals(parentMessage.getCreator().getKey()) || foCallback.mayMarkBestAnswer())) {
+						
+						// Remove potential stale components to prevent double buttons
+						mainVC.remove("mark_best_".concat(keyString));
+						mainVC.remove("unmark_best_".concat(keyString));
+
+						// Show the appropriate button based on best answer status
+						if (fullMessage.isBestAnswer()) {
+							Link unmarkBestAnswerLink = LinkFactory.createCustomLink("unmark_best_".concat(keyString), "unmark_best", "msg.best.answer.unmark", Link.BUTTON_SMALL, mainVC, this);
+							unmarkBestAnswerLink.setIconLeftCSS("o_icon o_icon-fw o_icon_undo");
+							unmarkBestAnswerLink.setUserObject(messageView);
+						} else {
+							Link markBestAnswerLink = LinkFactory.createCustomLink("mark_best_".concat(keyString), "mark_best", "msg.best.answer.mark", Link.BUTTON_SMALL, mainVC, this);
+							markBestAnswerLink.setIconLeftCSS("o_icon o_icon-fw o_icon_check");
+							markBestAnswerLink.setUserObject(messageView);
+						}
+					}
+				}
+			}
+			
+			// Report Abuse functionality - for all messages except own messages
+			if (!userIsMsgCreator && foCallback.mayReportAbuse()) {
+				Link reportAbuseLink = LinkFactory.createCustomLink("report_abuse_".concat(keyString), "report_abuse", "msg.report.abuse", Link.LINK, mainVC, this);
+				reportAbuseLink.setIconLeftCSS("o_icon o_icon-fw o_icon_warn");
+				reportAbuseLink.setUserObject(messageView);
 			}
 		}
 		
@@ -824,6 +864,12 @@ public class MessageListController extends BasicController implements GenericEve
 				doMoveMessage(ureq, (MessageView)uobject);
 			} else if (command.startsWith("exile")) {
 				doExportForumItem(ureq, (MessageView)uobject);
+			} else if (command.startsWith("mark_best")) {
+				doMarkBestAnswer(ureq, (MessageView)uobject);
+			} else if (command.startsWith("unmark_best")) {
+				doUnmarkBestAnswer(ureq, (MessageView)uobject);
+			} else if (command.startsWith("report_abuse")) {
+				doReportAbuse(ureq, (MessageView)uobject);
 			} else if(command.equals("vc")) {
 				doOpenVisitingCard(ureq, (Identity)uobject);
 			}
@@ -942,6 +988,13 @@ public class MessageListController extends BasicController implements GenericEve
 		} else if(event instanceof UnmarkedEvent) {
 			UnmarkedEvent ue = (UnmarkedEvent)event;
 			messageTableCtrl.onUnmarked(ue.getSubPath());
+		} else if(abuseReportCtrl == source) {
+			if(event == Event.DONE_EVENT) {
+				// Abuse report submitted successfully
+				showInfo("msg.report.abuse.success");
+			}
+			cmc.deactivate();
+			cleanUp();
 		} else if(source == cmc) {
 			cleanUp();
 		}
@@ -951,9 +1004,11 @@ public class MessageListController extends BasicController implements GenericEve
 	private void cleanUp() {
 		removeAsListenerAndDispose(replyMessageCtrl);
 		removeAsListenerAndDispose(editMessageCtrl);
+		removeAsListenerAndDispose(abuseReportCtrl);
 		removeAsListenerAndDispose(cmc);
 		replyMessageCtrl = null;
 		editMessageCtrl = null;
+		abuseReportCtrl = null;
 		cmc = null;
 	}
 	
@@ -1161,6 +1216,67 @@ public class MessageListController extends BasicController implements GenericEve
 		Long topMessageId = (m == null) ? currMsg.getKey() : m.getKey();
 		ForumDownloadResource download = new ForumDownloadResource("Forum", forum, foCallback, topMessageId, getLocale());
 		ureq.getDispatchResult().setResultingMediaResource(download);
+	}
+	
+	/**
+	 * Marks a message as the best answer in a Q&A thread.
+	 * Only the thread author or moderator can mark best answers.
+	 */
+	private void doMarkBestAnswer(UserRequest ureq, MessageView messageView) {
+		Message message = forumManager.getMessageById(messageView.getKey());
+		if (message != null && foCallback.mayMarkBestAnswer()) {
+			Message updatedMessage = forumManager.markAsBestAnswer(message);
+			if (updatedMessage != null) {
+				showInfo("msg.best.answer.success");
+				reloadModel(ureq, updatedMessage);
+			}
+		} else {
+			showWarning("may.not.mark.best.answer");
+		}
+	}
+	
+	/**
+	 * Unmarks a message as the best answer.
+	 */
+	private void doUnmarkBestAnswer(UserRequest ureq, MessageView messageView) {
+		Message message = forumManager.getMessageById(messageView.getKey());
+		if (message != null && foCallback.mayMarkBestAnswer()) {
+			Message updatedMessage = forumManager.unmarkBestAnswer(message);
+			if (updatedMessage != null) {
+				showInfo("msg.best.answer.unmark.success");
+				reloadModel(ureq, updatedMessage);
+			}
+		} else {
+			showWarning("may.not.unmark.best.answer");
+		}
+	}
+	
+	/**
+	 * Reports a message for abuse.
+	 */
+	private void doReportAbuse(UserRequest ureq, MessageView messageView) {
+		Message message = forumManager.getMessageById(messageView.getKey());
+		if (message != null && foCallback.mayReportAbuse()) {
+			// Check if user already reported this message
+			if (forumManager.hasUserReportedMessage(message.getKey(), getIdentity().getKey())) {
+				showWarning("msg.report.abuse.already.reported");
+				return;
+			}
+			
+			// Show abuse report dialog
+			removeAsListenerAndDispose(abuseReportCtrl);
+			removeAsListenerAndDispose(cmc);
+			
+			abuseReportCtrl = new AbuseReportController(ureq, getWindowControl(), message);
+			listenTo(abuseReportCtrl);
+			
+			cmc = new CloseableModalController(getWindowControl(), translate("close"), 
+				abuseReportCtrl.getInitialComponent(), true, translate("msg.report.abuse.title"));
+			listenTo(cmc);
+			cmc.activate();
+		} else {
+			showWarning("may.not.report.abuse");
+		}
 	}
 	
 	private void doToogleSticky() {
@@ -1526,6 +1642,14 @@ public class MessageListController extends BasicController implements GenericEve
 		
 		@Override
 		public int compareTo(MessageNode arg0) {
+			boolean best1 = message.isBestAnswer();
+			boolean best2 = arg0.getMessage().isBestAnswer();
+			
+			if(best1 && !best2) {
+				return -1;
+			} else if(!best1 && best2) {
+				return 1;
+			}
 			return message.getCreationDate().compareTo(arg0.getMessage().getCreationDate());
 		}
 	}

@@ -41,7 +41,8 @@ public class CreateCourseFromTemplateStep01 extends BasicStep {
 		super(ureq);
 		this.context = context;
 		setTranslator(Util.createPackageTranslator(RepositoryService.class, getLocale(), getTranslator()));
-		setNextStep(new CreateCourseFromTemplateStep02(ureq, context));
+		// Enhancement 1: Add selective element chooser step between template selection and settings
+		setNextStep(new CreateCourseFromTemplateStep01b(ureq, context));
 		setI18nTitleAndDescr("runtime.type.template", null);
 	}
 
