@@ -29,26 +29,30 @@ import org.olat.core.util.Util;
 import org.olat.repository.RepositoryService;
 
 /**
- * Initial date: 2025-11-04<br>
+ * Enhancement 1: Selective Element Chooser Step
+ * 
+ * This step allows users to select which course elements from the template
+ * they want to include in their new course.
+ * 
+ * Initial date: 2026-01-18<br>
  *
- * @author cpfranger, christoph.pfranger@frentix.com, <a href="https://www.frentix.com">https://www.frentix.com</a>
+ * @author Enhancement Team
  */
-public class CreateCourseFromTemplateStep01 extends BasicStep {
-
+public class CreateCourseFromTemplateStep01b extends BasicStep {
+	
 	private final CreateCourseFromTemplateContext context;
-
-	public CreateCourseFromTemplateStep01(UserRequest ureq, CreateCourseFromTemplateContext context) {
+	
+	public CreateCourseFromTemplateStep01b(UserRequest ureq, CreateCourseFromTemplateContext context) {
 		super(ureq);
 		this.context = context;
 		setTranslator(Util.createPackageTranslator(RepositoryService.class, getLocale(), getTranslator()));
-		// Enhancement 1: Add selective element chooser step between template selection and settings
-		setNextStep(new CreateCourseFromTemplateStep01b(ureq, context));
-		setI18nTitleAndDescr("runtime.type.template", null);
+		setNextStep(new CreateCourseFromTemplateStep02(ureq, context));
+		setI18nTitleAndDescr("wizard.step.select.elements", null);
 	}
 
 	@Override
 	public StepFormController getStepController(UserRequest ureq, WindowControl windowControl, StepsRunContext stepsRunContext, Form form) {
 		stepsRunContext.put(CreateCourseFromTemplateContext.KEY, context);
-		return new CreateCourseFromTemplateStep01Controller(ureq, windowControl, form, stepsRunContext);
+		return new CreateCourseFromTemplateStep01bController(ureq, windowControl, form, stepsRunContext, context);
 	}
 }

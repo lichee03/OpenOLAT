@@ -207,6 +207,9 @@ public class CopyCourseWizardController extends BasicController {
 		copyContext.setCoachDocuments(hasCoachDocuments(course));
 		copyContext.setSaveAsTemplate(saveAsTemplate);
 		
+		// Enhancement 1: Disabled by default for now - will enable after UI testing
+		copyContext.setSelectiveElementCopy(false);
+		
         CopyCourseGeneralStep copyCourseStep = new CopyCourseGeneralStep(ureq, copySteps, copyContext);
         
 		String title = saveAsTemplate ? translate("details.save.as.template") : translate("course.copy");

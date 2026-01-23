@@ -26,11 +26,18 @@ import org.olat.repository.RepositoryEntry;
  *
  * @author cpfranger, christoph.pfranger@frentix.com, <a href="https://www.frentix.com">https://www.frentix.com</a>
  */
+import java.util.Set;
+
 public class CreateCourseFromTemplateContext {
 	public static final String KEY = "createCourseFromTemplateContext";
 
 	private RepositoryEntry templateRepositoryEntry;
 	private RepositoryEntry createdRepositoryEntry;
+	
+	// Enhancement 1: Selective Element Chooser
+	private boolean selectiveElementCopy = true; // Enabled by default for templates
+	private Set<String> selectedElementIds;
+	private boolean copyAllElements = false;
 
 	public RepositoryEntry getTemplateRepositoryEntry() {
 		return templateRepositoryEntry;
@@ -46,5 +53,29 @@ public class CreateCourseFromTemplateContext {
 
 	public void setCreatedRepositoryEntry(RepositoryEntry createdRepositoryEntry) {
 		this.createdRepositoryEntry = createdRepositoryEntry;
+	}
+	
+	public boolean isSelectiveElementCopy() {
+		return selectiveElementCopy;
+	}
+	
+	public void setSelectiveElementCopy(boolean selectiveElementCopy) {
+		this.selectiveElementCopy = selectiveElementCopy;
+	}
+	
+	public Set<String> getSelectedElementIds() {
+		return selectedElementIds;
+	}
+	
+	public void setSelectedElementIds(Set<String> selectedElementIds) {
+		this.selectedElementIds = selectedElementIds;
+	}
+	
+	public boolean isCopyAllElements() {
+		return copyAllElements;
+	}
+	
+	public void setCopyAllElements(boolean copyAllElements) {
+		this.copyAllElements = copyAllElements;
 	}
 }

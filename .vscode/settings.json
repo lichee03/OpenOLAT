@@ -1,0 +1,14 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.debug.settings.hotCodeReplace": "auto",
+    "java.debug.settings.onBuildFailureProceed": true,
+    "files.exclude": {
+        "**/target": true,
+        "**/.settings": true,
+        "**/.classpath": true,
+        "**/.project": true
+    },
+    "maven.terminal.useJavaHome": true,
+    "maven.executable.preferMavenWrapper": false
+}

@@ -149,6 +149,7 @@ public class EditorMainController extends MainLayoutBasicController implements G
 	private static final String CMD_MOVENODE = "moven";
 	private static final String CMD_DELNODE = "command.deletenode";
 	private static final String CMD_PUBLISH = "pbl";
+	private static final String CMD_READINESS_CHECK = "readiness";
 	private static final String CMD_COURSEPREVIEW = "cprev";
 	protected static final String CMD_MULTI_SP = "cmp.multi.sp";
 	protected static final String CMD_MULTI_CHECKLIST = "cmp.multi.checklist";
@@ -180,6 +181,7 @@ public class EditorMainController extends MainLayoutBasicController implements G
 	private OverviewController overviewCtrl;
 	private PreviewConfigController previewController;
 	private MoveCopySubtreeController moveCopyController;
+	private DependencyAnalysisController dependencyAnalysisCtrl;
 	private DialogBoxController deleteDialogController;		
 	private LayoutMain3ColsController columnLayoutCtr;
 	private AlternativeCourseNodeController alternateCtr;
@@ -196,8 +198,9 @@ public class EditorMainController extends MainLayoutBasicController implements G
 	
 	private Dropdown cmdsDropDown;
 	private Link undelButton, alternativeLink, statusLink;
-	private Link previewLink, publishLink;
+	private Link previewLink, publishLink, readinessCheckLink;
 	private Link closeLink;
+	private CourseReadinessCheckController readinessCheckCtrl;
 	private Link createNodeLink, deleteNodeLink, moveNodeLink, duplicateNodeLink;
 	private Link importNodesLink;
 	
@@ -313,6 +316,9 @@ public class EditorMainController extends MainLayoutBasicController implements G
 				previewLink = LinkFactory.createToolLink(CMD_COURSEPREVIEW, translate(NLS_COMMAND_COURSEPREVIEW), this, "o_icon_preview");
 				previewLink.setVisible(nodeAccessService.isEditPreviewSupported(NodeAccessType.of(course)));
 				
+				readinessCheckLink = LinkFactory.createToolLink(CMD_READINESS_CHECK, translate("readiness.check"), this, "o_icon_check");
+				readinessCheckLink.setElementCssClass("o_sel_course_editor_readiness_check");
+				
 				publishLink = LinkFactory.createToolLink(CMD_PUBLISH, translate(NLS_COMMAND_PUBLISH), this, "o_icon_publish");
 				publishLink.setElementCssClass("o_sel_course_editor_publish");
 				
@@ -372,6 +378,7 @@ public class EditorMainController extends MainLayoutBasicController implements G
 		}
 		stackPanel.addTool(importNodesLink, Align.left);
 		stackPanel.addTool(statusLink, Align.right);
+		stackPanel.addTool(readinessCheckLink, Align.right);
 		stackPanel.addTool(previewLink, Align.right);
 		stackPanel.addTool(publishLink, Align.right);
 	}
@@ -457,6 +464,8 @@ public class EditorMainController extends MainLayoutBasicController implements G
 				askForAlternative(ureq, chosenNode);
 			} else if(previewLink == source) {
 				launchPreview(ureq, course);
+			} else if(readinessCheckLink == source) {
+				doOpenReadinessCheck(ureq, course);
 			} else if(publishLink == source) {
 				launchPublishingWizard(ureq, course, false);
 			} else if(closeLink == source) {
@@ -750,6 +759,9 @@ public class EditorMainController extends MainLayoutBasicController implements G
 				previewController = null;
 			}
 			
+		} else if (source == readinessCheckCtrl) {
+			cmc.deactivate();
+			cleanUp();
 		} else if (source == checklistWizard) {
 			if(event == Event.CANCELLED_EVENT || event == Event.DONE_EVENT || event == Event.CHANGED_EVENT) {
 				getWindowControl().pop();
@@ -771,6 +783,21 @@ public class EditorMainController extends MainLayoutBasicController implements G
 			}
 		} else if (source == cmc) {
 			cleanUp();
+		} else if (source == dependencyAnalysisCtrl) {
+			cmc.deactivate();
+			if (event == DependencyAnalysisController.COPY_WITH_DEPS_EVENT) {
+				// User chose to copy with dependencies
+				CourseEditorTreeNode sourceNode = dependencyAnalysisCtrl.getSourceNode();
+				cleanUp();
+				doCopyWithDependencies(ureq, course, sourceNode);
+			} else if (event == DependencyAnalysisController.COPY_ONLY_EVENT) {
+				// User chose to copy without dependencies - proceed to position selection
+				CourseEditorTreeNode sourceNode = dependencyAnalysisCtrl.getSourceNode();
+				cleanUp();
+				doOpenMoveCopyDialog(ureq, course, sourceNode, true);
+			} else if (event == Event.CANCELLED_EVENT) {
+				cleanUp();
+			}
 		} else if (source == moveCopyController) {	
 			cmc.deactivate();
 			if (event == Event.DONE_EVENT) {
@@ -788,7 +815,7 @@ public class EditorMainController extends MainLayoutBasicController implements G
 			} else if (event == Event.CANCELLED_EVENT) {
 				// user canceled						
 			}
-			cleanUp();
+			cleanUp();;
 		} else if (source == deleteDialogController){
 			removeAsListenerAndDispose(deleteDialogController);
 			deleteDialogController = null;
@@ -850,18 +877,22 @@ public class EditorMainController extends MainLayoutBasicController implements G
 
 	private void cleanUp() {
 		removeAsListenerAndDispose(moveCopyController);
+		removeAsListenerAndDispose(dependencyAnalysisCtrl);
 		removeAsListenerAndDispose(multiSPChooserCtr);
 		removeAsListenerAndDispose(chooseNodeTypeCtr);
 		removeAsListenerAndDispose(importNodesCtrl);
+		removeAsListenerAndDispose(readinessCheckCtrl);
 		removeAsListenerAndDispose(overviewCtrl);
 		removeAsListenerAndDispose(alternateCtr);
 		removeAsListenerAndDispose(calloutCtrl);
 		removeAsListenerAndDispose(statusCtr);
 		removeAsListenerAndDispose(cmc);
 		moveCopyController = null;
+		dependencyAnalysisCtrl = null;
 		chooseNodeTypeCtr = null;
 		multiSPChooserCtr = null;
 		importNodesCtrl = null;
+		readinessCheckCtrl = null;
 		overviewCtrl = null;
 		alternateCtr = null;
 		calloutCtrl = null;
@@ -1019,7 +1050,8 @@ public class EditorMainController extends MainLayoutBasicController implements G
 	}
 	
 	private void doMove(UserRequest ureq, ICourse course, boolean copy) {
-		if(guardModalController(moveCopyController)) return;
+		if(copy && guardModalController(dependencyAnalysisCtrl)) return;
+		if(!copy && guardModalController(moveCopyController)) return;
 		
 		TreeNode tn = menuTree.getSelectedNode();
 		if (tn == null) {
@@ -1027,15 +1059,46 @@ public class EditorMainController extends MainLayoutBasicController implements G
 			return;
 		}
 		
+		CourseEditorTreeNode cetn = cetm.getCourseEditorNodeById(tn.getIdent());
+		
+		if (copy) {
+			// For copy operations, show dependency analysis first
+			doOpenDependencyAnalysis(ureq, course, cetn);
+		} else {
+			// For move operations, go directly to position selection
+			doOpenMoveCopyDialog(ureq, course, cetn, false);
+		}
+	}
+	
+	private void doOpenDependencyAnalysis(UserRequest ureq, ICourse course, CourseEditorTreeNode cetn) {
+		removeAsListenerAndDispose(dependencyAnalysisCtrl);
+		removeAsListenerAndDispose(cmc);
+		
+		dependencyAnalysisCtrl = new DependencyAnalysisController(ureq, getWindowControl(), course, cetn);
+		listenTo(dependencyAnalysisCtrl);
+		
+		String title = translate("dependency.analysis.title");
+		cmc = new CloseableModalController(getWindowControl(), translate("close"), dependencyAnalysisCtrl.getInitialComponent(), true, title);
+		listenTo(cmc);
+		cmc.activate();
+	}
+	
+	private void doOpenMoveCopyDialog(UserRequest ureq, ICourse course, CourseEditorTreeNode cetn, boolean copy) {
 		removeAsListenerAndDispose(moveCopyController);
 		removeAsListenerAndDispose(cmc);
 		
-		CourseEditorTreeNode cetn = cetm.getCourseEditorNodeById(tn.getIdent());
 		moveCopyController = new MoveCopySubtreeController(ureq, getWindowControl(), course, cetn, copy);				
 		listenTo(moveCopyController);
 		cmc = new CloseableModalController(getWindowControl(), translate("close"), moveCopyController.getInitialComponent(), true, translate(NLS_INSERTNODE_TITLE));
 		listenTo(cmc);
 		cmc.activate();
+	}
+	
+	private void doCopyWithDependencies(UserRequest ureq, ICourse course, CourseEditorTreeNode sourceNode) {
+		// TODO: Implement copy with dependencies using DependencyMapperService
+		// For now, fall back to standard copy with position selection
+		showInfo("dependency.copy.with.deps.info", sourceNode.getCourseNode().getShortTitle());
+		doOpenMoveCopyDialog(ureq, course, sourceNode, true);
 	}
 	
 	private void doImportCourseNodes(UserRequest ureq) {
@@ -1448,6 +1511,19 @@ public class EditorMainController extends MainLayoutBasicController implements G
 		previewController = new PreviewConfigController(ureq, getWindowControl(), course);
 		listenTo(previewController);
 		stackPanel.pushController(translate("command.coursepreview"), previewController);
+	}
+	
+	private void doOpenReadinessCheck(UserRequest ureq, ICourse course) {
+		removeAsListenerAndDispose(readinessCheckCtrl);
+		removeAsListenerAndDispose(cmc);
+		
+		readinessCheckCtrl = new CourseReadinessCheckController(ureq, getWindowControl(), course);
+		listenTo(readinessCheckCtrl);
+		
+		cmc = new CloseableModalController(getWindowControl(), translate("close"),
+				readinessCheckCtrl.getInitialComponent(), true, translate("readiness.title"));
+		listenTo(cmc);
+		cmc.activate();
 	}
 	
 	private void launchSinglePagesWizard(UserRequest ureq, ICourse course) {
